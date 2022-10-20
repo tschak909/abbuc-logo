@@ -6,7 +6,7 @@
 
 all: logo.xex
 
-logo.com:
+logo.xex:
 	mads src/logo.s -l:logo.lst -o:logo.xex
 
 clean:
