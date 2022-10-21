@@ -1,0 +1,137 @@
+	;; 
+	;; ABBUC Logo in Character set
+	;; @author  Thomas Cherryhomes
+	;; @email   thom dot cherryhomes at gmail dot com
+	;; @license gpl v. 3
+	;;
+
+C0	=	$F0
+C1	=	$F1
+C2	=	$F2
+C3	=	$F3
+DL	=	$FE
+DH	=	$FF
+CS	=	$F6
+CO	=	$F7	
+	
+SDLSTL	=	$0230
+SDLSTH	=	$0231
+CHBAS	=	$02F4
+
+VDSLSTL	=       $0200
+VDSLSTH =	$0201	
+	
+WSYNC	=	$D40A
+NMIEN	=	$D40E
+	
+	ORG	$3400
+
+FONT:	INS	"abbuc.fnt"
+
+	;; Display List
+	
+DLST:	.BYTE	$70,$70,$70,$70,$70
+
+	.BYTE	$47,.LO(SCR),.HI(SCR)
+	.BYTE	$07,$07,$07
+
+	.BYTE	$70
+
+	.BYTE	$46,.LO(SCR),.HI(SCR)
+	.BYTE	$06,$06,$06
+
+	.BYTE 	$70
+	
+	.BYTE	$42,.LO(SCR2),.HI(SCR2)
+	.BYTE	$02,$02,$02
+
+	.BYTE	$41,.LO(DLST),.HI(DLST)	
+
+	;; Screen Data
+	
+SCR:
+	.BYTE $00,$00,$00,$00,$00,$3E,$00,$00,$3E,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	.BYTE $00,$00,$3D,$3F,$3C,$3B,$3F,$00,$3B,$3F,$00,$3C,$00,$3C,$3D,$3F,$3C,$00,$00,$00
+	.BYTE $00,$00,$3F,$3F,$3E,$3E,$00,$3E,$3E,$00,$3E,$3E,$00,$3E,$3E,$00,$00,$00,$00,$00
+	.BYTE $00,$00,$3B,$3F,$3E,$3B,$3F,$1B,$3B,$3F,$1B,$1C,$3F,$3E,$1C,$3F,$3C,$3C,$00,$00
+
+SCR2: 
+	.BYTE $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3E,$00,$00,$3E,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	.BYTE $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3D,$3F,$3C,$3B,$3F,$00,$3B,$3F,$00,$3C,$00,$3C,$3D,$3F,$3C,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	.BYTE $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3F,$3F,$3E,$3E,$00,$3E,$3E,$00,$3E,$3E,$00,$3E,$3E,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	.BYTE $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3B,$3F,$3E,$3B,$3F,$1B,$3B,$3F,$1B,$1C,$3F,$3E,$1C,$3F,$3C,$3C,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+
+START:
+	;; CLEAR KEYBOARD BUFFER
+	LDA	#$FF
+	STA	$02FC
+	
+	;; SAVE DISPLAY LIST
+
+	LDA	SDLSTL
+	STA	DL
+	LDA	SDLSTH
+	STA	DH
+
+	;; SAVE COLOR REGISTERS
+
+	LDX	#$04
+SL1:	LDA	$02C4,X
+	STA	C0,X
+	DEX
+	BPL	SL1
+
+	;; SAVE CHARSET
+
+	LDA	CHBAS
+	STA	CS
+	
+	;; SET DISPLAY LIST
+
+	LDA	#.lo(DLST)
+	STA	SDLSTL
+	LDA	#.hi(DLST)
+	STA	SDLSTH
+
+	LDX	#$FF
+	STX	$02FC
+	
+	;; SET CHARSET
+
+	LDA	#.HI(FONT)
+	STA	CHBAS
+	
+	;; Main loop
+
+LOOP:
+	STX	$D016
+	STX	WSYNC
+	STX	WSYNC
+	DEX
+	LDA	$02FC
+	BMI	LOOP
+
+	;; RESTORE DISPLAY LIST
+
+	LDA	DL
+	STA	SDLSTL
+	LDA	DH
+	STA	SDLSTH
+	
+	;; RESTORE COLOR REGISTERS
+
+	LDX	#$04
+SL2:	LDA	C0,X
+	STA	$02C4,X
+	DEX
+	BPL	SL2
+
+	;; RESTORE CHARACTER SET
+
+	LDA	CS
+	STA	CHBAS
+	
+	RTS
+
+	RUN	START
+	
